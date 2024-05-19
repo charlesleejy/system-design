@@ -8,6 +8,10 @@ Key-Value Store Overview:
   - `put(key, value)` - Insert “value” associated with “key”.
   - `get(key)` - Retrieve “value” associated with “key”.
 
+Tradeoffs
+- Read, write, and memory usage.
+- Consistency and availability.
+
 Design Characteristics:
 - Small key-value pair size (<10 KB).
 - Ability to store big data.
@@ -19,27 +23,50 @@ Design Characteristics:
 
 Single Server Key-Value Store:
 - Storage: Use a hash table in memory.
+- Memory access is fast, but space constraint.
 - Optimizations: 
   - Data compression.
-  - Store frequently used data in memory, rest on disk.
+  - Store frequently used data in memory, the rest on disk.
 
 Distributed Key-Value Store:
-- Data Partition: Use consistent hashing to evenly distribute data and minimize movement.
+- Data Partition: 
+    - Two challenges while partitioning the data:
+        - Distribute data across multiple servers evenly.
+        - Minimize data movement when nodes are added or removed.
+    - Use consistent hashing to evenly distribute data and minimize movement.
 - Data Replication: Replicate data across multiple servers (N servers).
 - Consistency: Use quorum consensus for reads and writes.
 
 CAP Theorem:
-- Consistency: All clients see the same data at the same time.
+- Consistency: All clients see the same data at the same time, no matter which node connected to.
 - Availability: System responds to all requests, even if some nodes are down.
 - Partition Tolerance: System continues to operate despite network partitions.
 - Tradeoffs: Can only achieve 2 out of 3 properties (CP, AP, CA).
+
+- Network failure is unavoidable --> a distributed system must tolerate network partition. 
+- Thus, a CA system cannot exist in real- world applications.
+
+Ideal situation
+- Network partition never occurs. 
+- Data written to n1 is automatically replicated to n2 and n3. 
+- Both consistency and availability are achieved.
+
+Real-world distributed systems
+- In a distributed system, partitions cannot be avoided 
+- When a partition occurs, we must choose between consistency and availability. 
 
 Consistency Models:
 - Strong Consistency: Always returns the most recent write.
 - Weak Consistency: May not return the most recent write.
 - Eventual Consistency: Given enough time, all replicas will be consistent.
 
+- Strong consistency is usually achieved by forcing a replica not to accept new reads/writes until every replica has agreed on current write. 
+- This approach is not ideal for highly available systems because it could block new operations. 
+- Dynamo and Cassandra adopt eventual consistency, which is our recommended consistency model for our key-value store. 
+- From concurrent writes, eventual consistency allows inconsistent values to enter the system and force the client to read the values to reconcile.
+
 Inconsistency Resolution:
+- Replication gives high availability but causes inconsistencies among replicas.
 - Versioning: Treat each data modification as a new version.
 - Vector Clocks: Track versions with [server, version] pairs to detect and resolve conflicts.
 
