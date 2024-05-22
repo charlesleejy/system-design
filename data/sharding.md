@@ -1,4 +1,4 @@
-### Sharding and partitioning 
+## Sharding and partitioning 
 
 are both techniques used to distribute data across multiple storage units to improve performance, scalability, and manageability. While the terms are sometimes used interchangeably, they have distinct meanings and use cases. Here’s a detailed explanation of each:
 
@@ -87,9 +87,11 @@ By understanding the distinctions and use cases for sharding and partitioning, y
 
 
 
-Databases that support partitioning and sharding
+## Databases that support partitioning and sharding
 
 Many modern databases support both partitioning and sharding, although the specific implementations and features can vary. Here's a list of some popular databases that support these techniques:
+
+
 
 ### Databases Supporting Partitioning
 
@@ -182,7 +184,7 @@ Many modern databases support both partitioning and sharding, although the speci
 By choosing the right database and understanding its partitioning and sharding capabilities, you can effectively manage and scale your data to meet your application's performance and scalability requirements.
 
 
-Partitioning performance 
+## Partitioning performance 
 
 Partitioning can significantly enhance database performance by organizing data in a way that optimizes access patterns and resource utilization. Here’s how partitioning helps improve database performance:
 
