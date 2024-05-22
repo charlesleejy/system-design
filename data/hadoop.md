@@ -173,8 +173,7 @@ Example:
 This example illustrates how MapReduce processes input data to count the occurrences of each word in a dataset.
 
 
-
-Explain in detail how HBase works in point form
+## HBase
 
 
 Here's a detailed point-by-point explanation of how HBase works:

@@ -104,7 +104,7 @@ Complex Data Quality Checks
     - Example: Product categories
 
 
-## data profiling for data quality checks
+## Data profiling for data quality checks
 
 Data profiling is an essential step in assessing data quality, as it involves a thorough examination of the existing data in a database, data warehouse, or dataset. Here's an example of how data profiling can be applied to conduct data quality checks:
 

@@ -1,4 +1,4 @@
-##Apache Spark
+## Apache Spark
 
 Definition:
 - Apache Spark is an open-source unified analytics engine designed for large-scale data processing. It provides an interface for programming entire clusters with implicit data parallelism and fault tolerance.
