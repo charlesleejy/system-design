@@ -250,3 +250,54 @@ By optimizing join operations in Virtual DataPort, users can enhance query perfo
 - Data Source I/O Parameters:
   - The number of I/O operations performed by the data source is influenced by parameters such as block size and multi-block read count.
   - Virtual DataPort provides default values for common configurations but allows modification of these parameters in the data source configuration to match specific database configurations accurately.
+
+
+
+## Cost-based optimization in Denodo 
+
+Cost-based optimization in Denodo involves estimating the cost of different execution plans for a given query and selecting the one with the lowest cost. Let's walk through an example to understand how this works:
+
+### Example Scenario:
+Suppose we have two data sources: `Sales_DB` and `Products_DB`, each containing tables for sales transactions (`Sales`) and product details (`Products`), respectively. We want to query the total sales amount for products in a specific category.
+
+### Query:
+```sql
+SELECT p.product_name, SUM(s.amount) AS total_sales
+FROM Products_DB.Products p
+JOIN Sales_DB.Sales s ON p.product_id = s.product_id
+WHERE p.category = 'Electronics'
+GROUP BY p.product_name;
+```
+
+### Steps in Cost-Based Optimization:
+
+1. Query Parsing and Rewriting:
+   - Denodo parses the query to identify the involved views (`Products` and `Sales`) and the query operations (join, filter, aggregation).
+   - It may rewrite the query to optimize its execution, such as pushing down filters to the data sources.
+
+2. Cost Estimation:
+   - Denodo estimates the cost of executing the query using different strategies.
+   - Cost factors include data volume, network latency, join complexity, and resource availability.
+   - For example, the cost of fetching data from `Products` and `Sales` tables, joining them, and aggregating the results.
+
+3. Execution Plan Generation:
+   - Denodo generates multiple candidate execution plans based on different optimization strategies.
+   - Plans may vary in join order, filter application, data source selection, and index usage.
+   - For instance, it may consider performing the join on the larger table first or utilizing an index on the join columns.
+
+4. Cost Evaluation:
+   - Denodo evaluates the estimated cost of each execution plan.
+   - It selects the plan with the lowest cost as the optimal plan for execution.
+   - This evaluation considers factors like data distribution, available indexes, and data source characteristics.
+
+5. Execution Plan Execution:
+   - Denodo executes the query using the selected optimal plan.
+   - It monitors resource usage and adjusts the plan dynamically if necessary.
+   - For example, it may allocate more resources to certain data sources or parallelize certain operations to improve performance.
+
+6. Feedback Loop:
+   - Denodo collects feedback during query execution to refine its cost estimation models.
+   - It uses this feedback to adapt to changing workload patterns and optimize future queries more effectively.
+
+### Result:
+Denodo executes the optimized query plan to retrieve the total sales amount for products in the 'Electronics' category efficiently, leveraging cost-based optimization to minimize resource consumption and improve performance.

@@ -243,8 +243,6 @@ In summary, Snowflake's scalable architecture, flexible resource management, opt
 
 ## How Micro-partitions & Data Clustering works
 
-Certainly! Here's a detailed explanation of how micro-partitions and data clustering work in Snowflake:
-
 Micro-partitions:
 
 1. Atomic Storage Units: Micro-partitions are the fundamental units of storage in Snowflake. Each micro-partition contains a subset of the table's data.
