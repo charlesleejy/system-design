@@ -1,3 +1,5 @@
+## Caching
+
 Caching is a technique used to store copies of data in temporary storage (cache) to improve data retrieval speeds. By storing frequently accessed data closer to the point of use, caching reduces the time and resources needed to retrieve the data from the original source, thereby enhancing performance and efficiency.
 
 Key Concepts in Caching

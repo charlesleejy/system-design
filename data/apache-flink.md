@@ -1,4 +1,6 @@
-### Apache Flink Overview in Point Form
+## Apache Flink Overview
+
+![alt text](../images/flink-architecture.jpeg)
 
 #### General Description:
 - Apache Flink: An open-source stream processing framework for distributed, high-performing, always-available, and accurate data streaming applications.
@@ -62,7 +64,7 @@
 Apache Flink is a robust and versatile stream processing framework designed to handle real-time data streams and large-scale batch processing with high efficiency, fault tolerance, and scalability.
 
 
-### How Apache Flink Works
+## How Apache Flink Works
 
 #### Overview:
 Apache Flink is designed to process data streams and batch data efficiently and with high scalability. Here's a detailed explanation of how it works, broken down into key components and processes.
@@ -165,7 +167,7 @@ Apache Flink processes data streams and batch data by distributing tasks across 
 
 
 
-### Differences between Kafka, Spark Streaming, and Apache Flink:
+## Differences between Kafka, Spark Streaming, and Apache Flink:
 
 ### Apache Kafka
 
