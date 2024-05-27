@@ -5,14 +5,21 @@ Java is a high-level, class-based, object-oriented programming language that is 
 ### Key Concepts of Java
 
 1. Platform Independence
+
    - Write Once, Run Anywhere (WORA): Java programs are compiled into bytecode that can run on any device equipped with a Java Virtual Machine (JVM). This means that Java code is portable across different operating systems and hardware architectures.
+
    - Java Virtual Machine (JVM): The JVM is an engine that provides a runtime environment to execute Java bytecode. It abstracts away the underlying hardware and OS, ensuring that Java applications run consistently everywhere.
 
 2. Object-Oriented Programming (OOP)
+
    - Classes and Objects: Java is fundamentally object-oriented, meaning it uses objects (instances of classes) to represent and manipulate data.
+
    - Inheritance: Allows one class to inherit fields and methods from another, promoting code reuse.
+
    - Polymorphism: Enables a single interface to represent different underlying data types, allowing for flexible and extensible code.
+
    - Encapsulation: Ensures that data is hidden within objects and accessed only through defined interfaces (methods), promoting modularity and maintainability.
+   
    - Abstraction: Simplifies complex reality by modeling classes appropriate to the problem, and by working at a higher level of complexity.
 
 3. Robustness and Security
