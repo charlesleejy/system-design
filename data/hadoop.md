@@ -115,7 +115,7 @@ By leveraging HDFS for scalable storage and MapReduce for parallel data processi
 
 
 
-### Hadoop Tools: Pig, Hive, HBase, Oozie, and Spark
+## Hadoop Tools: Pig, Hive, HBase, Oozie, and Spark
 
 The Hadoop ecosystem consists of various tools that cater to different aspects of big data processing, storage, and analysis. Here’s an overview of some of the key tools: Pig, Hive, HBase, Oozie, and Spark.
 
@@ -588,7 +588,7 @@ Use Cases: Best for handling huge datasets that require optimizations for storag
 Each of these technologies addresses different aspects of data storage and processing, showcasing the diversity and richness of tools available for handling big data. They are essential components of modern data architecture, enabling efficient data processing and storage at scale.
 
 
-Explain the evolution of these technologies
+## Explain the evolution of these technologies
 
 The evolution of data technologies like HDFS, MapReduce, Hive, Flink, Presto, Impala, S3, and Apache Iceberg reflects the ongoing advancements in data storage, processing, and management, driven by the growing needs of businesses to harness big data effectively. Here's an overview of how these technologies have evolved over time:
 
