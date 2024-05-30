@@ -1,6 +1,6 @@
-System Design Concepts
+## System Design Concepts
 
-Sections and Concepts
+### Sections and Concepts
 
 1. Networks & Protocols (IP, DNS, HTTP, TCP, etc.)
 - IP (Internet Protocol)
