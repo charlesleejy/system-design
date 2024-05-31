@@ -1,3 +1,5 @@
+## Idempotency
+
 Idempotency is a concept in computer science and mathematics referring to an operation that can be applied multiple times without changing the result beyond the initial application. It ensures consistency and reliability, particularly in distributed systems and APIs, where operations might be retried due to network issues or failures.
 
 ### Key Points of Idempotency
