@@ -1,4 +1,4 @@
-Considerations for Designing Distributed Systems
+## Considerations for Designing Distributed Systems
 
 1. Scalability
 - Horizontal vs. Vertical Scaling: Prefer horizontal scaling for better load handling.
