@@ -322,3 +322,5 @@ Once CDH is installed, configure HDFS through the Cloudera Manager.
 ### Conclusion
 
 Setting up Cloudera HDFS for a data pipeline running on PySpark involves installing CDH, configuring HDFS, and integrating PySpark with HDFS. By following the detailed steps outlined above, you can efficiently set up a robust data pipeline capable of processing large datasets in a scalable and distributed environment. Using Cloudera Manager, you can easily manage and monitor your Hadoop and Spark services, ensuring optimal performance and reliability for your data processing tasks.
+
+
