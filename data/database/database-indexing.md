@@ -1,4 +1,4 @@
-### Types of Indexing and When to Use Each
+## Types of Indexing and When to Use Each
 
 Definition:
 - Indexing is a database optimization technique that improves the speed of data retrieval operations on a database table.
