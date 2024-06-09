@@ -1,5 +1,7 @@
 ## Apache Spark
 
+![alt text](../../images/spark-architecture.png)
+
 Definition:
 - Apache Spark is an open-source unified analytics engine designed for large-scale data processing. It provides an interface for programming entire clusters with implicit data parallelism and fault tolerance.
 
@@ -155,7 +157,7 @@ Definition:
 By explaining Spark's architecture in detail during an interview, you can showcase your understanding of how Spark leverages distributed computing, in-memory processing, and fault tolerance to handle large-scale data processing workloads. Additionally, highlighting the different components and their roles demonstrates your familiarity with Spark's core concepts and capabilities.
 
 
-### Explain PySpark vs Scala vs Java for Apache spark
+## Explain PySpark vs Scala vs Java for Apache spark
 
 When working with Apache Spark, choosing between PySpark, Scala, and Java depends on several factors including the specific project requirements, the team's familiarity with each language, performance considerations, and the ecosystem and libraries available. Here's a comparative analysis of using PySpark, Scala, and Java with Apache Spark:
 
@@ -495,7 +497,7 @@ Understanding when and how to use `repartition` and `coalesce` can significantly
 - Optimizations: Leverages the Catalyst optimizer for efficient query execution.
 - API: High-level API with built-in functions for data manipulation and analysis.
 
-### Differences between Client, Cluster, and Local Mode
+## Differences between Client, Cluster, and Local Mode
 
 #### Client Mode
 - Driver Location: Runs on the machine from which the application is submitted.
@@ -1172,3 +1174,194 @@ The `explain` output will show the optimized logical plan and the chosen physica
 The Catalyst Optimizer in Apache Spark SQL is a powerful tool that optimizes SQL queries for better performance. By leveraging rule-based and cost-based optimization techniques, Catalyst transforms logical plans into efficient physical plans. This allows Spark to execute queries faster and more efficiently, making it a robust choice for large-scale data processing.
 
 
+
+## Broadcast Hash Join
+
+A broadcast hash join is an efficient join algorithm commonly used in distributed data processing systems, such as Apache Spark. It is particularly effective when one of the tables involved in the join operation is small enough to fit into the memory of each worker node. Here's a detailed explanation of how it works:
+
+### How Broadcast Hash Join Works
+
+1. **Identify the Smaller Table**:
+   - Determine which of the two tables involved in the join operation is smaller. This table is referred to as the "small" table.
+
+2. **Broadcast the Smaller Table**:
+   - The smaller table is broadcasted to all worker nodes in the cluster. This means that a copy of the smaller table is sent to the memory of each node.
+   
+3. **Hash the Smaller Table**:
+   - Each worker node creates a hash table from the broadcasted smaller table. The hash table is typically built on the join key(s).
+
+4. **Partition the Larger Table**:
+   - The larger table is partitioned across the worker nodes. Each partition is processed independently.
+
+5. **Probe Phase**:
+   - Each worker node performs the join operation locally by probing the hash table with rows from its partition of the larger table. For each row in the larger table, the join key is used to look up matching rows in the hash table.
+
+6. **Combine Results**:
+   - The results from all worker nodes are combined to produce the final join result.
+
+### Advantages
+
+- **Efficiency**: Since the smaller table is loaded into memory and broadcasted, each worker node can perform the join operation locally without needing to shuffle large amounts of data over the network.
+- **Scalability**: The broadcast hash join is highly scalable for cases where the smaller table fits into memory, as it reduces the need for expensive data shuffling.
+
+### When to Use Broadcast Hash Join
+
+- **Small Table**: One of the tables involved in the join should be small enough to fit into the memory of each worker node.
+- **Distributed Systems**: Particularly useful in distributed data processing systems where minimizing data shuffling and network I/O is crucial for performance.
+
+### Example in Apache Spark
+
+In Apache Spark, you can force a broadcast hash join using the `broadcast` function:
+
+```python
+from pyspark.sql import SparkSession
+from pyspark.sql.functions import broadcast
+
+spark = SparkSession.builder.appName("BroadcastHashJoinExample").getOrCreate()
+
+# Load data into DataFrames
+large_df = spark.read.csv("large_table.csv")
+small_df = spark.read.csv("small_table.csv")
+
+# Perform a broadcast hash join
+joined_df = large_df.join(broadcast(small_df), large_df["id"] == small_df["id"])
+
+joined_df.show()
+```
+
+In this example, the `small_df` DataFrame is broadcasted to all worker nodes, enabling a broadcast hash join with the `large_df` DataFrame.
+
+### Limitations
+
+- **Memory Constraints**: The smaller table must fit into the memory of each worker node. If the table is too large, it can cause memory issues.
+- **Not Suitable for Large Tables**: If both tables are large, a different join strategy (e.g., shuffle hash join or sort-merge join) may be more appropriate.
+
+### Conclusion
+
+Broadcast hash join is a powerful join strategy for distributed data processing systems, offering significant performance benefits when one of the tables is small enough to fit into memory. By minimizing data shuffling and leveraging local memory for join operations, it enhances the efficiency and scalability of join operations in big data environments.
+
+
+
+## Spark's Adaptive Query Execution (AQE)
+
+Adaptive Query Execution (AQE) is a significant feature in Apache Spark that dynamically adjusts the execution plan of a query based on runtime statistics. This feature aims to optimize query performance by making decisions during query execution, rather than relying solely on static compile-time decisions.
+
+### Key Concepts and Features of AQE
+
+1. **Dynamic Optimization**
+2. **Stage-Level Optimization**
+3. **Runtime Statistics Collection**
+4. **Optimizations Applied by AQE**
+    - Dynamic Partition Pruning
+    - Skew Join Optimization
+    - Coalescing Shuffle Partitions
+5. **Configuration and Tuning**
+
+### 1. Dynamic Optimization
+
+Traditional query execution in Spark relies on a static query plan generated before execution. This plan might not always be optimal due to the lack of accurate runtime statistics. AQE allows Spark to re-optimize the query plan based on actual runtime statistics, leading to potentially significant performance improvements.
+
+### 2. Stage-Level Optimization
+
+AQE performs optimizations at the stage level. A stage in Spark is a set of tasks that can be executed concurrently. AQE allows Spark to re-optimize each stage of the query execution plan dynamically, adjusting strategies based on real-time information.
+
+### 3. Runtime Statistics Collection
+
+AQE collects runtime statistics during the execution of a query. These statistics include data like the size of partitions, the distribution of data across partitions, and the amount of data shuffled between stages. These statistics are crucial for making informed optimization decisions.
+
+### 4. Optimizations Applied by AQE
+
+#### a. Dynamic Partition Pruning
+
+Dynamic partition pruning is a technique to reduce the amount of data read by a query. When a query involves joins with partitioned tables, AQE can prune partitions dynamically at runtime based on the join conditions, thus reading only the necessary partitions.
+
+**Example:**
+
+Consider a query joining a large fact table with a smaller dimension table:
+
+```sql
+SELECT *
+FROM fact_table
+JOIN dim_table ON fact_table.dim_id = dim_table.id
+WHERE dim_table.category = 'specific_category';
+```
+
+With dynamic partition pruning, Spark can determine the relevant partitions of `fact_table` to read based on the filter applied to `dim_table`, reducing the amount of data processed.
+
+#### b. Skew Join Optimization
+
+Data skew is a common issue in distributed systems where some partitions have significantly more data than others, leading to uneven load distribution and performance bottlenecks. AQE can detect data skew at runtime and optimize join operations by splitting skewed partitions and redistributing the data more evenly.
+
+**Example:**
+
+If a join operation involves a skewed key that results in one partition handling much more data than others, AQE can split the skewed partition into smaller, more manageable chunks, distributing the workload more evenly across the cluster.
+
+#### c. Coalescing Shuffle Partitions
+
+Shuffle operations in Spark, such as joins and aggregations, often result in the creation of many small partitions. This can lead to overhead due to the large number of tasks. AQE can dynamically coalesce small shuffle partitions into larger ones, reducing the number of tasks and improving performance.
+
+**Example:**
+
+If a shuffle operation results in 1000 small partitions, AQE can coalesce these into 100 larger partitions, reducing the overhead associated with managing a large number of tasks.
+
+### 5. Configuration and Tuning
+
+AQE is enabled by default in Spark 3.0 and later versions, but it can be configured and tuned using various parameters:
+
+- **Enable/Disable AQE:**
+  ```scala
+  spark.conf.set("spark.sql.adaptive.enabled", true) // Enable AQE
+  spark.conf.set("spark.sql.adaptive.enabled", false) // Disable AQE
+  ```
+
+- **Dynamic Partition Pruning:**
+  ```scala
+  spark.conf.set("spark.sql.optimizer.dynamicPartitionPruning.enabled", true)
+  ```
+
+- **Skew Join Optimization:**
+  ```scala
+  spark.conf.set("spark.sql.adaptive.skewJoin.enabled", true)
+  ```
+
+- **Coalescing Shuffle Partitions:**
+  ```scala
+  spark.conf.set("spark.sql.adaptive.coalescePartitions.enabled", true)
+  ```
+
+- **Minimum and Maximum Number of Coalesced Partitions:**
+  ```scala
+  spark.conf.set("spark.sql.adaptive.coalescePartitions.minPartitionNum", 1)
+  spark.conf.set("spark.sql.adaptive.coalescePartitions.maxPartitionNum", 200)
+  ```
+
+### Example of AQE in Action
+
+Consider a Spark SQL query that involves a join between a large table and a smaller, highly skewed table. Without AQE, the static query plan might not handle the skew effectively, leading to poor performance.
+
+**Query:**
+
+```sql
+SELECT *
+FROM large_table
+JOIN small_skewed_table ON large_table.key = small_skewed_table.key;
+```
+
+**With AQE Enabled:**
+
+1. **Initial Plan**: Spark generates an initial execution plan based on static statistics.
+2. **Runtime Statistics Collection**: As the query executes, Spark collects runtime statistics about the size and distribution of data.
+3. **Dynamic Optimization**:
+   - **Dynamic Partition Pruning**: If applicable, Spark prunes unnecessary partitions from `large_table`.
+   - **Skew Join Optimization**: Detects skew in `small_skewed_table` and splits skewed partitions.
+   - **Coalescing Shuffle Partitions**: Adjusts the number of shuffle partitions to optimize resource usage.
+
+**Benefits**:
+
+- **Improved Load Distribution**: Handling data skew ensures a more balanced workload.
+- **Reduced I/O and Shuffle Overhead**: Pruning partitions and coalescing shuffle partitions reduce the amount of data read and the overhead associated with shuffling.
+- **Better Performance**: The dynamic adjustments lead to overall improved query performance.
+
+### Conclusion
+
+Adaptive Query Execution (AQE) in Apache Spark is a powerful feature that improves query performance by making dynamic optimizations based on runtime statistics. By enabling AQE, Spark can handle data skews, optimize joins, prune partitions dynamically, and adjust shuffle partitions, leading to more efficient query execution. Understanding and leveraging AQE can significantly enhance the performance and scalability of Spark applications.

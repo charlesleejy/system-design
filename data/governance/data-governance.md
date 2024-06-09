@@ -1,4 +1,4 @@
-## Data governance
+## Data Governance
 
 Data governance is the process of managing the availability, usability, integrity, and security of the data in enterprise systems. Effective data governance ensures that data is consistent and trustworthy and doesn’t get misused. Here’s a detailed explanation of data governance:
 
