@@ -1,6 +1,6 @@
 ## Apache Flink Overview
 
-![alt text](../images/flink-architecture.jpeg)
+![alt text](../../images/flink-architecture.jpeg)
 
 #### General Description:
 - Apache Flink: An open-source stream processing framework for distributed, high-performing, always-available, and accurate data streaming applications.
