@@ -251,105 +251,345 @@ Here’s a high-level example of how these layers fit together in a data warehou
 Each layer in a data warehouse architecture plays a vital role in ensuring that data is correctly ingested, processed, stored, and made accessible for analysis. Understanding these layers helps in designing robust data warehouse solutions that can efficiently support business intelligence and analytics activities.
 
 
-## Slowly Changing Dimension
+## Fact tables and dimension tables
 
-Slowly Changing Dimensions (SCD) are a concept in data warehousing used to manage and track changes in the dimensions of a dataset over time. Dimensions are attributes or descriptive characteristics of the data, often used to describe facts in a fact table. When these attributes change infrequently, they are referred to as slowly changing dimensions. There are several methods to handle these changes, each with its own trade-offs. The most common types of SCDs are Types 0, 1, 2, 3, 4, and 6.
+In data warehousing and business intelligence, fact tables and dimension tables are fundamental components of the star schema and snowflake schema, which are the most common types of data warehouse schemas. These tables help in organizing data efficiently for query performance and analysis. Here’s a detailed explanation of fact and dimension tables:
 
-### SCD Types Explained
+### Fact Tables
 
-#### 1. Type 0: Retain Original
-- Description: No changes are allowed. The original value is retained even if the source data changes.
-- Use Case: Useful when historical accuracy is paramount and changes should never be recorded.
+#### Definition:
+Fact tables are the central tables in a star or snowflake schema. They contain quantitative data (measures) for analysis and are often denormalized to optimize query performance. Each row in a fact table represents a measurable event or transaction.
 
-#### 2. Type 1: Overwrite
-- Description: The new data overwrites the old data. No history of previous values is kept.
-- Use Case: Useful when corrections or non-critical updates are made, and only the latest value is needed.
-- Example:
-  ```sql
-  UPDATE customer_dim
-  SET address = 'New Address'
-  WHERE customer_id = 123;
-  ```
+#### Characteristics:
+1. **Measures**: Contain numerical data that can be aggregated (e.g., sales amount, quantity sold, profit).
+2. **Foreign Keys**: Link to dimension tables via foreign key relationships. These keys help to join fact tables with dimensions for contextual information.
+3. **Granularity**: Defines the level of detail stored in the fact table (e.g., sales at the transaction level, daily summary).
 
-#### 3. Type 2: Add New Row
-- Description: A new record is added with a new version key when a change occurs. The old record is marked as inactive or given an end date.
-- Use Case: Useful when it is important to keep a complete history of changes.
-- Implementation:
-  - Add a `version` or `effective_date` and `end_date` column to the dimension table.
-  - When an attribute changes, mark the old record as inactive and insert a new record with the updated attribute.
-- Example:
-  ```sql
-  -- Mark old record as inactive
-  UPDATE customer_dim
-  SET end_date = '2024-05-01'
-  WHERE customer_id = 123 AND end_date IS NULL;
-  
-  -- Insert new record
-  INSERT INTO customer_dim (customer_id, name, address, start_date, end_date)
-  VALUES (123, 'John Doe', 'New Address', '2024-05-01', NULL);
-  ```
+#### Types of Fact Tables:
+1. **Transactional Fact Tables**: Capture data about individual transactions (e.g., sales transactions, orders).
+2. **Snapshot Fact Tables**: Capture data at regular intervals, providing a snapshot of metrics over time (e.g., daily inventory levels).
+3. **Accumulating Snapshot Fact Tables**: Capture data that reflects the current state and changes over time, often including multiple dates (e.g., order processing stages).
 
-#### 4. Type 3: Add New Column
-- Description: A new column is added to store the previous value of an attribute.
-- Use Case: Useful when only the previous value needs to be kept for comparison purposes.
-- Example:
-  ```sql
-  ALTER TABLE customer_dim ADD COLUMN previous_address VARCHAR(255);
-  
-  UPDATE customer_dim
-  SET previous_address = address,
-      address = 'New Address'
-  WHERE customer_id = 123;
-  ```
+#### Example of a Fact Table:
+```sql
+CREATE TABLE SalesFact (
+    SaleID INT PRIMARY KEY,
+    DateID INT,
+    ProductID INT,
+    StoreID INT,
+    SalesAmount DECIMAL(10, 2),
+    QuantitySold INT,
+    FOREIGN KEY (DateID) REFERENCES DateDimension(DateID),
+    FOREIGN KEY (ProductID) REFERENCES ProductDimension(ProductID),
+    FOREIGN KEY (StoreID) REFERENCES StoreDimension(StoreID)
+);
+```
 
-#### 5. Type 4: History Table
-- Description: Historical data is stored in a separate history table.
-- Use Case: Useful when keeping a history of changes without cluttering the main dimension table.
-- Implementation:
-  - Create a history table with the same structure as the dimension table plus additional columns for timestamps.
-  - Insert old records into the history table before updating the dimension table.
-- Example:
-  ```sql
-  -- Create history table
-  CREATE TABLE customer_dim_history AS SELECT * FROM customer_dim WHERE 1=0;
-  ALTER TABLE customer_dim_history ADD COLUMN change_date DATE;
+### Dimension Tables
 
-  -- Insert old record into history table
-  INSERT INTO customer_dim_history SELECT *, CURRENT_DATE FROM customer_dim WHERE customer_id = 123;
+#### Definition:
+Dimension tables provide context to the data in the fact tables. They contain descriptive attributes (dimensions) that describe the objects in the fact table. Dimension tables are typically denormalized to enhance query performance.
 
-  -- Update dimension table
-  UPDATE customer_dim
-  SET address = 'New Address'
-  WHERE customer_id = 123;
-  ```
+#### Characteristics:
+1. **Attributes**: Contain descriptive data, which can be textual or numeric (e.g., product name, category, region, date).
+2. **Primary Key**: Each dimension table has a primary key that uniquely identifies each record and is used as a foreign key in the fact table.
+3. **Denormalization**: Often denormalized to optimize query performance, even though some normalization might still be used in a snowflake schema.
 
-#### 6. Type 6: Hybrid (1+2+3)
-- Description: Combines the features of Types 1, 2, and 3. A new row is added with a new version key, and previous values are stored in additional columns.
-- Use Case: Useful when a complete history is needed, along with the ability to track previous values in the same record.
-- Implementation:
-  - Add columns for `current_version`, `previous_version`, `start_date`, `end_date`, and other relevant attributes.
-  - Update records as in Type 2, but also maintain previous values in the same record.
-- Example:
-  ```sql
-  -- Update old record as inactive and move previous values to new columns
-  UPDATE customer_dim
-  SET end_date = '2024-05-01',
-      previous_address = address
-  WHERE customer_id = 123 AND end_date IS NULL;
+#### Types of Dimension Tables:
+1. **Conformed Dimensions**: Shared across multiple fact tables and data marts, ensuring consistency in reporting (e.g., time, product dimensions).
+2. **Role-Playing Dimensions**: A single dimension table used in different roles within the same fact table (e.g., DateDimension used for order date, ship date).
 
-  -- Insert new record with updated address
-  INSERT INTO customer_dim (customer_id, name, address, start_date, end_date, previous_address)
-  VALUES (123, 'John Doe', 'New Address', '2024-05-01', NULL, 'Old Address');
-  ```
+#### Example of a Dimension Table:
+```sql
+CREATE TABLE ProductDimension (
+    ProductID INT PRIMARY KEY,
+    ProductName VARCHAR(255),
+    Category VARCHAR(255),
+    Brand VARCHAR(255),
+    Supplier VARCHAR(255)
+);
+```
 
-### Choosing the Right SCD Type
+### Star Schema
 
-The choice of SCD type depends on business requirements:
-- Type 0: When historical accuracy and no changes are paramount.
-- Type 1: When only the latest data is needed and historical changes are not important.
-- Type 2: When a complete history of changes is needed.
-- Type 3: When only the previous state needs to be tracked.
-- Type 4: When historical data should be kept separately to avoid clutter in the main table.
-- Type 6: When a combination of a full history and previous state tracking is required.
+#### Structure:
+- Central fact table surrounded by related dimension tables.
+- Simplicity and ease of use for querying and reporting.
 
-Understanding and implementing the appropriate SCD type ensures that your data warehouse accurately reflects historical data changes and meets business requirements.
+#### Example:
+```
+     +-------------+
+     | DateDimension | 
+     +-------------+
+           |
+     +-------------+
+     | SalesFact   |
+     +-------------+
+       /    |     \
++--------+ +-------+ +-------+
+| Store  | | Product| |  ...  |
++--------+ +-------+ +-------+
+```
+
+### Snowflake Schema
+
+#### Structure:
+- Similar to the star schema but with normalized dimension tables.
+- Dimension tables can be connected to other dimension tables.
+- Reduces data redundancy but can be more complex for querying.
+
+#### Example:
+```
+     +-------------+
+     | DateDimension | 
+     +-------------+
+           |
+     +-------------+
+     | SalesFact   |
+     +-------------+
+       /    |     \
++--------+ +-------+ +-------+
+| Store  | | Product| |  ...  |
++--------+ +-------+ +-------+
+             |
+         +----------+
+         | Category  |
+         +----------+
+```
+
+### Differences Between Fact and Dimension Tables
+
+1. **Content**:
+   - **Fact Tables**: Contain quantitative data (measures) and foreign keys to dimension tables.
+   - **Dimension Tables**: Contain descriptive attributes to provide context for the measures in fact tables.
+
+2. **Granularity**:
+   - **Fact Tables**: High granularity, representing detailed transactions or events.
+   - **Dimension Tables**: Lower granularity, representing descriptive information about the entities involved in transactions.
+
+3. **Volume**:
+   - **Fact Tables**: Typically have a large number of rows due to the detailed transaction-level data.
+   - **Dimension Tables**: Generally have fewer rows compared to fact tables but can have many attributes.
+
+4. **Updates**:
+   - **Fact Tables**: Insert-heavy operations with occasional updates.
+   - **Dimension Tables**: Subject to updates as descriptive information changes (e.g., product descriptions, customer details).
+
+### Querying Fact and Dimension Tables
+
+When querying data in a data warehouse, joins between fact and dimension tables are common to combine quantitative measures with descriptive attributes for analysis.
+
+#### Example Query:
+```sql
+SELECT 
+    d.Date,
+    p.ProductName,
+    s.StoreName,
+    f.SalesAmount,
+    f.QuantitySold
+FROM 
+    SalesFact f
+JOIN 
+    DateDimension d ON f.DateID = d.DateID
+JOIN 
+    ProductDimension p ON f.ProductID = p.ProductID
+JOIN 
+    StoreDimension s ON f.StoreID = s.StoreID
+WHERE 
+    d.Date BETWEEN '2023-01-01' AND '2023-01-31'
+ORDER BY 
+    d.Date, p.ProductName, s.StoreName;
+```
+
+### Conclusion
+
+Fact tables and dimension tables are foundational elements of data warehousing and play a crucial role in organizing and optimizing data for efficient querying and analysis. Fact tables store the measurable, quantitative data of business processes, while dimension tables provide descriptive attributes that add context to the facts. Understanding the structure and relationships between these tables is essential for designing and implementing effective data warehouse schemas.
+
+
+ ## Designing a data warehouse for scalability and performance 
+
+Designing a data warehouse for scalability and performance involves several key considerations and best practices that ensure it can handle increasing volumes of data, support complex queries, and deliver fast query performance. Here’s a detailed guide on how to design a scalable and high-performance data warehouse:
+
+### 1. Data Modeling
+
+#### Star Schema and Snowflake Schema
+- **Star Schema**: Simplified, denormalized structure where a central fact table connects to multiple dimension tables. This design enhances query performance by reducing the number of joins.
+- **Snowflake Schema**: More normalized structure where dimension tables can connect to other dimension tables. This design can save space and improve maintainability but might require more joins.
+
+#### Fact and Dimension Tables
+- **Fact Tables**: Store transactional data (e.g., sales, clicks). They should be designed to handle large volumes of data and include measures that are analyzed.
+- **Dimension Tables**: Store descriptive attributes (e.g., product details, time, geography). They provide context to the data in fact tables.
+
+### 2. Partitioning
+
+#### Horizontal Partitioning
+- Divide large tables into smaller, more manageable pieces based on a specific key (e.g., date, region).
+- Improves query performance by scanning only relevant partitions rather than the entire table.
+- Common techniques: Range partitioning, list partitioning, hash partitioning.
+
+#### Partition Pruning
+- Ensure that the database can skip irrelevant partitions during query execution, reducing the amount of data scanned.
+
+### 3. Indexing
+
+#### Types of Indexes
+- **B-Tree Indexes**: General-purpose indexing for a wide range of queries.
+- **Bitmap Indexes**: Efficient for columns with a low cardinality (few unique values).
+- **Clustered Indexes**: Physically order the data in the table to match the index, improving range queries.
+
+#### Indexing Strategy
+- Carefully choose columns to index based on query patterns and access paths.
+- Avoid over-indexing, which can slow down data loading and increase storage requirements.
+
+### 4. Data Distribution and Sharding
+
+#### Data Distribution
+- Distribute data evenly across nodes to ensure balanced workloads.
+- Techniques include hash-based distribution, round-robin, and replication.
+
+#### Sharding
+- Split large tables into smaller shards distributed across multiple servers.
+- Each shard is a subset of the entire dataset, allowing horizontal scaling.
+
+### 5. Storage Optimization
+
+#### Columnar Storage
+- Store data in columns rather than rows to optimize analytical query performance.
+- Columnar storage improves compression and reduces I/O, leading to faster query execution.
+
+#### Data Compression
+- Use data compression techniques to reduce storage requirements and improve I/O performance.
+- Choose compression algorithms based on the data types and query patterns.
+
+### 6. ETL Processes
+
+#### ETL (Extract, Transform, Load)
+- Design efficient ETL pipelines to minimize data loading times and ensure data freshness.
+- Use incremental loading strategies to update only the changed data rather than reloading entire datasets.
+
+#### ELT (Extract, Load, Transform)
+- Load raw data into the data warehouse first and then transform it. This approach leverages the data warehouse's processing power for transformations.
+
+### 7. Query Optimization
+
+#### Materialized Views
+- Precompute and store the results of complex queries to speed up query execution.
+- Refresh materialized views regularly to ensure data accuracy.
+
+#### Query Caching
+- Cache the results of frequently executed queries to reduce execution time.
+- Use query caching selectively based on query frequency and complexity.
+
+### 8. Resource Management
+
+#### Virtual Warehouses (Compute Clusters)
+- Allocate virtual warehouses or compute clusters based on workload requirements.
+- Scale compute resources up or down based on demand to optimize performance and cost.
+
+#### Workload Management
+- Prioritize and allocate resources to different workloads based on their importance and performance requirements.
+- Use workload management tools to monitor and adjust resource allocation dynamically.
+
+### 9. Monitoring and Maintenance
+
+#### Performance Monitoring
+- Continuously monitor query performance, resource utilization, and data loading processes.
+- Use performance metrics to identify bottlenecks and optimize the data warehouse.
+
+#### Regular Maintenance
+- Perform regular maintenance tasks such as vacuuming, indexing, and updating statistics to ensure optimal performance.
+- Implement automated maintenance routines to minimize manual intervention.
+
+### Example Design: Building a Scalable Data Warehouse
+
+#### Step 1: Data Modeling
+- Define the star schema with a central fact table (e.g., `SalesFact`) and dimension tables (e.g., `ProductDimension`, `CustomerDimension`, `DateDimension`).
+
+```sql
+CREATE TABLE SalesFact (
+    SaleID INT PRIMARY KEY,
+    ProductID INT,
+    CustomerID INT,
+    DateID INT,
+    SalesAmount DECIMAL(10, 2),
+    QuantitySold INT,
+    FOREIGN KEY (ProductID) REFERENCES ProductDimension(ProductID),
+    FOREIGN KEY (CustomerID) REFERENCES CustomerDimension(CustomerID),
+    FOREIGN KEY (DateID) REFERENCES DateDimension(DateID)
+);
+
+CREATE TABLE ProductDimension (
+    ProductID INT PRIMARY KEY,
+    ProductName VARCHAR(255),
+    Category VARCHAR(255),
+    Supplier VARCHAR(255)
+);
+
+CREATE TABLE CustomerDimension (
+    CustomerID INT PRIMARY KEY,
+    CustomerName VARCHAR(255),
+    Region VARCHAR(255),
+    AgeGroup VARCHAR(50)
+);
+
+CREATE TABLE DateDimension (
+    DateID INT PRIMARY KEY,
+    Date DATE,
+    Year INT,
+    Quarter INT,
+    Month INT,
+    Day INT
+);
+```
+
+#### Step 2: Partitioning
+- Partition the `SalesFact` table by `DateID` to improve query performance on date-related queries.
+
+```sql
+CREATE TABLE SalesFact (
+    ...
+) PARTITION BY RANGE (DateID);
+```
+
+#### Step 3: Indexing
+- Create indexes on foreign key columns and other frequently queried columns.
+
+```sql
+CREATE INDEX idx_product_id ON SalesFact(ProductID);
+CREATE INDEX idx_customer_id ON SalesFact(CustomerID);
+CREATE INDEX idx_date_id ON SalesFact(DateID);
+```
+
+#### Step 4: Data Distribution
+- Distribute the `SalesFact` table by `CustomerID` to ensure even data distribution.
+
+```sql
+CREATE TABLE SalesFact (
+    ...
+) DISTRIBUTE BY HASH (CustomerID);
+```
+
+#### Step 5: ETL Processes
+- Use a tool like Apache Airflow to schedule and manage ETL pipelines for data extraction, transformation, and loading into the data warehouse.
+
+#### Step 6: Query Optimization
+- Create materialized views for complex aggregations.
+
+```sql
+CREATE MATERIALIZED VIEW MonthlySales AS
+SELECT
+    DateID,
+    SUM(SalesAmount) AS TotalSales,
+    SUM(QuantitySold) AS TotalQuantity
+FROM
+    SalesFact
+GROUP BY
+    DateID;
+```
+
+#### Step 7: Resource Management
+- Configure virtual warehouses to handle different workloads, such as data loading, ad-hoc queries, and reporting.
+
+### Conclusion
+
+Designing a data warehouse for scalability and performance requires careful planning and implementation of best practices in data modeling, partitioning, indexing, storage optimization, ETL processes, query optimization, resource management, and monitoring. By following these guidelines, you can build a robust and efficient data warehouse that can handle large volumes of data, support complex queries, and scale seamlessly to meet growing data demands.
