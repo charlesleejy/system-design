@@ -1,3 +1,193 @@
+## MapReduce
+
+
+MapReduce is a programming model designed for processing large data sets with a parallel, distributed algorithm on a cluster. It is composed of two main functions: Map and Reduce. Here's a detailed explanation and example to illustrate how MapReduce works.
+
+### Key Concepts of MapReduce
+
+1. **Map Function**:
+   - Takes an input pair and produces a set of intermediate key-value pairs.
+   - A map function processes a chunk of input data and transforms it into intermediate key-value pairs.
+
+2. **Shuffle and Sort**:
+   - The system groups all intermediate values associated with the same intermediate key.
+   - This step prepares the data for the Reduce function.
+
+3. **Reduce Function**:
+   - Takes intermediate key-value pairs and merges all values associated with the same key.
+   - Produces a smaller set of final output key-value pairs.
+
+### Example: Word Count Problem
+
+The word count problem is a classical example of how MapReduce can be applied. The goal is to count the occurrences of each word in a large collection of documents.
+
+#### Step-by-Step Process
+
+1. **Input Data**:
+   Suppose we have the following documents:
+   - Document 1: "Hello world"
+   - Document 2: "Hello Hadoop"
+
+2. **Map Function**:
+   Each document is split into words, and each word is associated with the number 1.
+   - Document 1: ("Hello", 1), ("world", 1)
+   - Document 2: ("Hello", 1), ("Hadoop", 1)
+
+   The Map function processes these documents and produces the following intermediate key-value pairs:
+   ```
+   Mapper output from Document 1:
+   ("Hello", 1)
+   ("world", 1)
+
+   Mapper output from Document 2:
+   ("Hello", 1)
+   ("Hadoop", 1)
+   ```
+
+3. **Shuffle and Sort**:
+   The intermediate key-value pairs are grouped by key (word). This step sorts and prepares the data for the Reduce function.
+   ```
+   Shuffle and Sort output:
+   ("Hello", [1, 1])
+   ("Hadoop", [1])
+   ("world", [1])
+   ```
+
+4. **Reduce Function**:
+   The Reduce function processes each group of intermediate key-value pairs and combines the values (sums them up) to get the final count for each word.
+   ```
+   Reducer output:
+   ("Hello", 2)
+   ("Hadoop", 1)
+   ("world", 1)
+   ```
+
+5. **Final Output**:
+   The result is the count of each word in the input documents.
+   ```
+   ("Hello", 2)
+   ("Hadoop", 1)
+   ("world", 1)
+   ```
+
+### Implementation in Java
+
+Below is a simplified Java example using the Hadoop framework to implement the word count problem.
+
+#### Mapper Class
+
+```java
+import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.LongWritable;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapreduce.Mapper;
+
+import java.io.IOException;
+import java.util.StringTokenizer;
+
+public class WordCountMapper extends Mapper<LongWritable, Text, Text, IntWritable> {
+
+    private final static IntWritable one = new IntWritable(1);
+    private Text word = new Text();
+
+    @Override
+    protected void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
+        StringTokenizer itr = new StringTokenizer(value.toString());
+        while (itr.hasMoreTokens()) {
+            word.set(itr.nextToken());
+            context.write(word, one);
+        }
+    }
+}
+```
+
+#### Reducer Class
+
+```java
+import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapreduce.Reducer;
+
+import java.io.IOException;
+
+public class WordCountReducer extends Reducer<Text, IntWritable, Text, IntWritable> {
+
+    private IntWritable result = new IntWritable();
+
+    @Override
+    protected void reduce(Text key, Iterable<IntWritable> values, Context context) throws IOException, InterruptedException {
+        int sum = 0;
+        for (IntWritable val : values) {
+            sum += val.get();
+        }
+        result.set(sum);
+        context.write(key, result);
+    }
+}
+```
+
+#### Driver Class
+
+The driver class is used to configure and run the MapReduce job.
+
+```java
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
+import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+
+public class WordCount {
+
+    public static void main(String[] args) throws Exception {
+        Configuration conf = new Configuration();
+        Job job = Job.getInstance(conf, "word count");
+
+        job.setJarByClass(WordCount.class);
+        job.setMapperClass(WordCountMapper.class);
+        job.setCombinerClass(WordCountReducer.class); // Optional combiner step
+        job.setReducerClass(WordCountReducer.class);
+
+        job.setOutputKeyClass(Text.class);
+        job.setOutputValueClass(IntWritable.class);
+
+        FileInputFormat.addInputPath(job, new Path(args[0]));
+        FileOutputFormat.setOutputPath(job, new Path(args[1]));
+
+        System.exit(job.waitForCompletion(true) ? 0 : 1);
+    }
+}
+```
+
+#### Running the Job
+
+1. **Prepare Input Data**:
+   - Place your input text files in the HDFS input directory (e.g., `/user/your-username/input`).
+
+2. **Compile and Package the Code**:
+   - Compile your Java code and package it into a JAR file using tools like Apache Maven or Gradle.
+
+3. **Run the MapReduce Job**:
+   - Use the Hadoop command line to run your MapReduce job.
+   ```bash
+   hadoop jar wordcount.jar WordCount /user/your-username/input /user/your-username/output
+   ```
+
+4. **View the Output**:
+   - After the job completes, you can view the output in the specified HDFS output directory (e.g., `/user/your-username/output`).
+
+   ```bash
+   hdfs dfs -cat /user/your-username/output/part-r-00000
+   ```
+
+### Summary
+
+The MapReduce programming model consists of two main functions: Map and Reduce. The Mapper class processes input data and generates intermediate key-value pairs, while the Reducer class aggregates these pairs to produce the final output. This model is particularly powerful for processing large-scale data across a distributed cluster, leveraging the parallel processing capabilities of Hadoop. The word count example demonstrates how to use MapReduce to count the occurrences of each word in a set of documents, showing the core concepts and typical workflow of a MapReduce job.
+
+
+
 ## What are the problems of mapreduce and why spark solves it
 
 MapReduce is a programming model and associated implementation for processing and generating large data sets with a distributed algorithm on a cluster. While it has been widely used and has enabled many applications to scale, it has several limitations. Apache Spark was developed to address these shortcomings. Here’s an overview of the problems associated with MapReduce and how Spark solves them:

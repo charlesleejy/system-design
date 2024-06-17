@@ -137,7 +137,7 @@ Selecting the right database involves carefully evaluating these considerations 
 
 
 
-### How to Decide Between SQL and NoSQL Databases
+## How to Decide Between SQL and NoSQL Databases
 
 When deciding which database to use, consider the following factors for both SQL and NoSQL databases:
 
